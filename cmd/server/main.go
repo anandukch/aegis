@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/anandudevops/aegis/internal/db"
 	"github.com/anandudevops/aegis/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -18,7 +19,9 @@ func main() {
 		log.Println("no .env file found, using environment variables")
 	}
 
-	
+	if _, err := db.Connect(); err != nil {
+		log.Fatalf("db connect: %v", err)
+	}
 
 	if os.Getenv("APP_ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)

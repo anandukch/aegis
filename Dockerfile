@@ -9,6 +9,7 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates tzdata
 WORKDIR /app
 COPY --from=builder /app/aegis .
+COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 CMD ["./aegis"]
