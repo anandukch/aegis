@@ -39,18 +39,19 @@ API reference → **[docs/API.md](docs/API.md)**
 
 ## RBAC Access Matrix
 
-| Role     | email  | phone  | card_number | aadhaar | name   | dob    |
-|----------|--------|--------|-------------|---------|--------|--------|
-| ADMIN    | FULL   | FULL   | FULL        | FULL    | FULL   | FULL   |
-| ANALYST  | MASKED | MASKED | **DENIED**  | MASKED  | MASKED | MASKED |
-| SERVICE  | MASKED | MASKED | FULL        | MASKED  | MASKED | MASKED |
-| VIEWER   | MASKED | MASKED | MASKED      | MASKED  | MASKED | MASKED |
+| Role     | email  | phone  | card_number | aadhaar | pan    | name   | dob    |
+|----------|--------|--------|-------------|---------|--------|--------|--------|
+| ADMIN    | FULL   | FULL   | FULL        | FULL    | FULL   | FULL   | FULL   |
+| ANALYST  | MASKED | MASKED | **DENIED**  | MASKED  | MASKED | MASKED | MASKED |
+| SERVICE  | MASKED | MASKED | FULL        | MASKED  | MASKED | MASKED | MASKED |
+| VIEWER   | MASKED | MASKED | MASKED      | MASKED  | MASKED | MASKED | MASKED |
 
 **Masking examples:**
 - email: `john@example.com` → `j***@example.com`
 - phone: `9876543210` → `******3210`
 - card: `4111111111114242` → `****-****-****-4242`
 - aadhaar: `123456781234` → `XXXX-XXXX-1234`
+- pan: `ABCDE1234F` → `ABCDE****F`
 - name: `John Doe` → `J*** D***`
 - dob: `1990-07-15` → `****-**-15`
 

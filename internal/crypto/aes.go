@@ -72,6 +72,8 @@ func MaskValue(value, fieldType string) string {
 		return maskCard(value)
 	case "aadhaar":
 		return maskAadhaar(value)
+	case "pan":
+		return maskPAN(value)
 	case "name":
 		return maskName(value)
 	case "dob":
@@ -117,6 +119,14 @@ func maskAadhaar(aadhaar string) string {
 		return "XXXX-XXXX-XXXX"
 	}
 	return "XXXX-XXXX-" + digits[len(digits)-4:]
+}
+
+func maskPAN(pan string) string {
+	normalized := NormalizePAN(pan)
+	if !IsPAN(normalized) {
+		return "*****"
+	}
+	return normalized[:5] + "****" + string(normalized[9])
 }
 
 func maskName(name string) string {

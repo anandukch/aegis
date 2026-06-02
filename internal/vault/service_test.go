@@ -76,6 +76,30 @@ func TestTokenize_RepoError(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestTokenize_InvalidPAN(t *testing.T) {
+	svc := NewService(&mockRepo{})
+	_, err := svc.Tokenize("pan", "invalid-pan", "")
+	assert.ErrorIs(t, err, crypto.ErrInvalidPAN)
+}
+
+func TestTokenize_NormalizesPAN(t *testing.T) {
+	m := &mockRepo{}
+	m.On("Create", mock.MatchedBy(func(r *models.VaultRecord) bool {
+		return r.FieldType == "pan" && r.EncValue != ""
+	})).Return(nil).Run(func(args mock.Arguments) {
+		record := args.Get(0).(*models.VaultRecord)
+		dec, err := crypto.Decrypt(record.EncValue, record.Nonce, testKey)
+		require.NoError(t, err)
+		assert.Equal(t, "ABCDE1234F", dec)
+	})
+
+	svc := NewService(m)
+	record, err := svc.Tokenize("pan", "abcde1234f", uuid.New().String())
+	require.NoError(t, err)
+	assert.Equal(t, "pan", record.FieldType)
+	m.AssertExpectations(t)
+}
+
 func TestDetokenize_AdminFull(t *testing.T) {
 	rec := encryptedRecord(t, "john@example.com", "email")
 	m := &mockRepo{}

@@ -68,7 +68,7 @@ Store a PII value and get back a token.
 { "field_type": "email", "value": "john@example.com" }
 ```
 
-Supported `field_type` values: `email`, `phone`, `card_number`, `aadhaar`, `name`, `dob`
+Supported `field_type` values: `email`, `phone`, `card_number`, `aadhaar`, `pan`, `name`, `dob`
 
 **Response 201**
 ```json

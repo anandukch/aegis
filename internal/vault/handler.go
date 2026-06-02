@@ -1,9 +1,11 @@
 package vault
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/anandudevops/aegis/internal/audit"
+	"github.com/anandudevops/aegis/internal/crypto"
 	"github.com/anandudevops/aegis/pkg/response"
 	"github.com/gin-gonic/gin"
 )
@@ -31,6 +33,10 @@ func (h *Handler) Tokenize(c *gin.Context) {
 	record, err := h.svc.Tokenize(req.FieldType, req.Value, userID.(string))
 	if err != nil {
 		h.auditSvc.Log(userID.(string), "STORE", "", req.FieldType, "", c.ClientIP(), false, err.Error())
+		if errors.Is(err, crypto.ErrInvalidPAN) {
+			response.Error(c, http.StatusBadRequest, err.Error())
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, "tokenization failed")
 		return
 	}

@@ -103,7 +103,7 @@ TOKEN="eyJhbGciOiJIUzI1NiIs..."
 
 Send the sensitive value to the vault. You get back a token — store this in your database instead of the raw value.
 
-**Supported field types:** `email`, `phone`, `card_number`, `aadhaar`, `name`, `dob`
+**Supported field types:** `email`, `phone`, `card_number`, `aadhaar`, `pan`, `name`, `dob`
 
 ```bash
 # Store an email
@@ -150,6 +150,12 @@ curl -X POST http://localhost:8080/api/v1/vault/tokenize \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"field_type": "name", "value": "John Doe"}'
+
+# Store a PAN (format: ABCDE1234F)
+curl -X POST http://localhost:8080/api/v1/vault/tokenize \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"field_type": "pan", "value": "ABCDE1234F"}'
 ```
 
 ---
@@ -201,6 +207,7 @@ curl -X POST http://localhost:8080/api/v1/vault/detokenize \
 | `phone` | `9876543210` → `******3210` |
 | `card_number` | `4111111111114242` → `****-****-****-4242` |
 | `aadhaar` | `123456781234` → `XXXX-XXXX-1234` |
+| `pan` | `ABCDE1234F` → `ABCDE****F` |
 | `name` | `John Doe` → `J*** D***` |
 | `dob` | `1990-07-15` → `****-**-15` |
 

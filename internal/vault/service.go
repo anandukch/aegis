@@ -44,6 +44,14 @@ func NewService(repo RepositoryInterface) *Service {
 }
 
 func (s *Service) Tokenize(fieldType, value, createdByID string) (*models.VaultRecord, error) {
+	if fieldType == "pan" {
+		normalized, err := crypto.ValidatePAN(value)
+		if err != nil {
+			return nil, err
+		}
+		value = normalized
+	}
+
 	key, err := masterKey()
 	if err != nil {
 		return nil, err
