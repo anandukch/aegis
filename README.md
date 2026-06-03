@@ -118,7 +118,7 @@ go test ./internal/crypto/... ./internal/vault/... -v
 
 ## What's Next
 
-See [`internal/llmproxy/README.md`](internal/llmproxy/README.md) — planned LLM proxy that detokenizes PII before sending prompts to external models, preventing raw PII from ever reaching OpenAI/Anthropic.
+See [`internal/llmproxy/README.md`](internal/llmproxy/README.md) — LLM proxy that tokenizes PII before sending prompts to external models, detokenizes responses, and logs every exposure in the audit trail.
 
 ---
 
@@ -136,3 +136,6 @@ See [`internal/llmproxy/README.md`](internal/llmproxy/README.md) — planned LLM
 | `JWT_SECRET` | HMAC secret for JWT signing (min 32 chars) |
 | `JWT_EXPIRY_HOURS` | JWT TTL in hours (default: 24) |
 | `VAULT_MASTER_KEY` | AES-256 master key — **must be exactly 32 bytes** |
+| `LLM_PROVIDER` | Default LLM provider (`openai`) |
+| `LLM_API_KEY` | API key for the LLM provider |
+| `LLM_MODEL` | Model name (e.g. `gpt-4o`) |

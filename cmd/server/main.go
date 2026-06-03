@@ -9,6 +9,7 @@ import (
 	"github.com/anandudevops/aegis/internal/audit"
 	"github.com/anandudevops/aegis/internal/auth"
 	"github.com/anandudevops/aegis/internal/db"
+	"github.com/anandudevops/aegis/internal/llmproxy"
 	"github.com/anandudevops/aegis/internal/middleware"
 	"github.com/anandudevops/aegis/internal/rbac"
 	"github.com/anandudevops/aegis/internal/vault"
@@ -42,6 +43,9 @@ func main() {
 	vaultSvc := vault.NewService(vaultRepo)
 	vaultHandler := vault.NewHandler(vaultSvc, auditSvc)
 
+	llmProxySvc := llmproxy.NewService(vaultSvc, auditSvc, nil)
+	llmProxyHandler := llmproxy.NewHandler(llmProxySvc)
+
 	if os.Getenv("APP_ENV") == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -74,6 +78,8 @@ func main() {
 
 		api.GET("/audit/logs", middleware.RequireRole("ADMIN"), auditHandler.GetLogs)
 		api.GET("/audit/logs/:token", middleware.RequireRole("ADMIN"), auditHandler.GetLogsByToken)
+
+		api.POST("/llmproxy/chat", llmProxyHandler.Chat)
 	}
 
 	port := os.Getenv("APP_PORT")

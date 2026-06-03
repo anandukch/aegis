@@ -216,6 +216,38 @@ Each log entry:
 
 All audit entries for a specific token. **ADMIN only.**
 
+Audit entries with `action: "LLM_PROXY"` record each LLM proxy call (provider in `field_type`, tokens used in `token`).
+
+---
+
+## LLM Proxy
+
+### POST /api/v1/llmproxy/chat
+
+Tokenizes detected PII in the prompt, forwards sanitized text to an LLM, detokenizes the response. **Any authenticated role.**
+
+**Request**
+```json
+{
+  "prompt": "email john@example.com about card 4111111111114242",
+  "provider": "openai"
+}
+```
+
+**Response 200**
+```json
+{
+  "success": true,
+  "data": {
+    "response": "I'll send an email to john@example.com...",
+    "pii_detected": 2,
+    "provider": "openai"
+  }
+}
+```
+
+**Response 503** — LLM provider unavailable
+
 ---
 
 ## Health
