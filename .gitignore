@@ -1,4 +1,5 @@
 .env
 *.db
 aegis
+rotate-keys
 /bin/

@@ -1,0 +1,1 @@
+ALTER TABLE vault_records ADD COLUMN IF NOT EXISTS enc_dek TEXT;

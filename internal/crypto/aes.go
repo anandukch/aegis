@@ -62,6 +62,60 @@ func Decrypt(ciphertext, nonce string, key []byte) (string, error) {
 	return string(plaintext), nil
 }
 
+// GenerateDEK returns a cryptographically random 32-byte Data Encryption Key.
+func GenerateDEK() ([]byte, error) {
+	dek := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, dek); err != nil {
+		return nil, fmt.Errorf("generate DEK: %w", err)
+	}
+	return dek, nil
+}
+
+// WrapDEK encrypts a DEK with the given KEK using AES-256-GCM and returns a
+// base64-encoded string of nonce || ciphertext suitable for database storage.
+func WrapDEK(dek, kek []byte) (string, error) {
+	block, err := aes.NewCipher(kek)
+	if err != nil {
+		return "", fmt.Errorf("wrap DEK: create cipher: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", fmt.Errorf("wrap DEK: create gcm: %w", err)
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", fmt.Errorf("wrap DEK: generate nonce: %w", err)
+	}
+	sealed := gcm.Seal(nonce, nonce, dek, nil)
+	return base64.StdEncoding.EncodeToString(sealed), nil
+}
+
+// UnwrapDEK decrypts a base64-encoded wrapped DEK using the given KEK.
+func UnwrapDEK(encDEK string, kek []byte) ([]byte, error) {
+	data, err := base64.StdEncoding.DecodeString(encDEK)
+	if err != nil {
+		return nil, fmt.Errorf("unwrap DEK: decode: %w", err)
+	}
+	block, err := aes.NewCipher(kek)
+	if err != nil {
+		return nil, fmt.Errorf("unwrap DEK: create cipher: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("unwrap DEK: create gcm: %w", err)
+	}
+	nonceSize := gcm.NonceSize()
+	if len(data) < nonceSize {
+		return nil, errors.New("unwrap DEK: ciphertext too short")
+	}
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	dek, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, errors.New("unwrap DEK: authentication tag mismatch")
+	}
+	return dek, nil
+}
+
 func MaskValue(value, fieldType string) string {
 	switch fieldType {
 	case "email":

@@ -12,6 +12,7 @@ type VaultRecord struct {
 	FieldType string     `gorm:"not null" json:"field_type"`
 	EncValue  string     `gorm:"not null" json:"-"`
 	Nonce     string     `gorm:"not null" json:"-"`
+	EncDEK    string     `gorm:"column:enc_dek" json:"-"`
 	CreatedBy uuid.UUID  `gorm:"type:uuid" json:"created_by"`
 	CreatedAt time.Time  `json:"created_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
