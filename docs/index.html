@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aegis — PII Data Privacy Vault</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230D1117'/%3E%3Cg transform='translate(16%2C16)'%3E%3Cpath d='M-6%2C-10 L-10%2C-10 L-10%2C10 L-6%2C10' fill='none' stroke='%2300D4AA' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M6%2C-10 L10%2C-10 L10%2C10 L6%2C10' fill='none' stroke='%2300D4AA' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M0%2C-5.5 L-4%2C5.5 L4%2C5.5 Z' fill='%2300D4AA'/%3E%3Cline x1='-2' y1='0.8' x2='2' y2='0.8' stroke='%230D1117' stroke-width='1.4' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml">
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --bg-elevated: #111113;
+      --bg-card: #141416;
+      --border: #27272a;
+      --border-subtle: #1f1f23;
+      --fg: #fafafa;
+      --muted: #a1a1aa;
+      --dim: #71717a;
+      --accent: #e4e4e7;
+      --link: #a1a1aa;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--fg);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--link); text-decoration: none; }
+    a:hover { color: var(--fg); }
+
+    .skip {
+      position: absolute;
+      left: -9999px;
+    }
+    .skip:focus {
+      left: 1rem;
+      top: 1rem;
+      z-index: 100;
+      padding: 0.5rem 1rem;
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    /* Nav */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      height: 3.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(10, 10, 11, 0.85);
+      backdrop-filter: blur(12px);
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      line-height: 0;
+    }
+    .nav-brand svg {
+      height: 1.75rem;
+      width: auto;
+      display: block;
+    }
+    .hero-logo {
+      display: block;
+      width: min(280px, 72vw);
+      height: auto;
+      margin: 0 auto 2rem;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+      font-size: 0.875rem;
+    }
+
+    /* Layout */
+    .wrap {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    section { padding: 5rem 0; }
+    section + section { border-top: 1px solid var(--border-subtle); }
+
+    .label {
+      display: block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      max-width: 36rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-body {
+      color: var(--muted);
+      max-width: 40rem;
+      font-size: 1.0625rem;
+      line-height: 1.7;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 6rem 0 5rem;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      max-width: 48rem;
+      margin: 0 auto 1.25rem;
+    }
+    .hero-lead {
+      color: var(--muted);
+      font-size: 1.125rem;
+      max-width: 36rem;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+
+    /* Install bar */
+    .install-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      max-width: 42rem;
+      margin: 0 auto 1.5rem;
+      padding: 0.75rem 0.75rem 0.75rem 1.25rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--muted);
+      overflow: hidden;
+    }
+    .install-bar code {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .install-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4375rem 0.875rem;
+      font-family: var(--sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      border-radius: 0.375rem;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--fg);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn:hover {
+      background: var(--border);
+      border-color: var(--dim);
+      color: var(--fg);
+    }
+    .btn-primary {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+    .btn-primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Pills */
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem 1.25rem;
+      list-style: none;
+      font-size: 0.8125rem;
+      color: var(--dim);
+    }
+    .pills li::before {
+      content: "·";
+      margin-right: 1.25rem;
+      color: var(--border);
+    }
+    .pills li:first-child::before { display: none; }
+
+    /* Workflow cards */
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      margin-top: 2.5rem;
+    }
+    .workflow-card {
+      background: var(--bg-card);
+      padding: 1.75rem;
+    }
+    .workflow-card .step {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 0.75rem;
+    }
+    .workflow-card h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
+    }
+    .workflow-card p {
+      font-size: 0.9375rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* Feature grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+    .feature-card {
+      padding: 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+    }
+    .feature-card h3 {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      margin-bottom: 0.375rem;
+    }
+    .feature-card p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* Tag grid */
+    .tag-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+    .tag {
+      padding: 0.375rem 0.875rem;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+    }
+
+    /* Roles */
+    .role-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+      gap: 0.75rem;
+      margin-top: 2rem;
+      list-style: none;
+    }
+    .role-list li {
+      padding: 0.875rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.375rem;
+    }
+
+    /* Install section */
+    .install-block {
+      margin-top: 2rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      line-height: 1.7;
+      color: var(--muted);
+      overflow-x: auto;
+    }
+    .install-note {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--dim);
+    }
+
+    /* Footer */
+    footer {
+      padding: 2.5rem 0 3rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.8125rem;
+      color: var(--dim);
+    }
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    @media (max-width: 640px) {
+      .nav-links { gap: 1rem; font-size: 0.8125rem; }
+      .install-bar { flex-direction: column; align-items: stretch; }
+      .install-actions { justify-content: flex-end; }
+      section { padding: 3.5rem 0; }
+      .hero { padding: 4rem 0 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="nav">
+    <a class="nav-brand" href="#main" aria-label="Aegis home">
+      <svg width="160" height="36" viewBox="0 0 160 36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g transform="translate(18,18)">
+          <path d="M-9,-14 L-14,-14 L-14,14 L-9,14" fill="none" stroke="#00D4AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9,-14 L14,-14 L14,14 L9,14" fill="none" stroke="#00D4AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,-8 L-6,8 L6,8 Z" fill="#00D4AA"/>
+          <line x1="-3" y1="1" x2="3" y2="1" stroke="#0D1117" stroke-width="1.6" stroke-linecap="round"/>
+        </g>
+        <text x="40" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="17" font-weight="600" letter-spacing="3" fill="#E6EDF3">AEGIS</text>
+      </svg>
+    </a>
+    <ul class="nav-links">
+      <li><a href="./USAGE_GUIDE.html">Docs</a></li>
+      <li><a href="./API.html">API</a></li>
+      <li><a href="https://github.com/anandukch/aegis">GitHub</a></li>
+    </ul>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="wrap">
+        <svg class="hero-logo" width="280" height="80" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Aegis - PII Privacy Vault">
+          <g transform="translate(40,40)">
+            <path d="M-18,-28 L-28,-28 L-28,28 L-18,28" fill="none" stroke="#00D4AA" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18,-28 L28,-28 L28,28 L18,28" fill="none" stroke="#00D4AA" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M0,-16 L-11,14 L11,14 Z" fill="#00D4AA"/>
+            <line x1="-5.5" y1="2" x2="5.5" y2="2" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/>
+          </g>
+          <text x="84" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="600" letter-spacing="4" fill="#E6EDF3">AEGIS</text>
+          <line x1="84" y1="44" x2="264" y2="44" stroke="#00D4AA" stroke-width="0.6" opacity="0.35"/>
+          <text x="84" y="58" font-family="system-ui, -apple-system, sans-serif" font-size="9" letter-spacing="2" fill="#8B949E">PII PRIVACY VAULT</text>
+        </svg>
+        <p class="hero-badge">Open source · Deploy anywhere</p>
+        <h1>Store tokens, not raw PII.</h1>
+        <p class="hero-lead">
+          Aegis is a PII data privacy vault. Send sensitive values to the API,
+          get back an opaque token, and store that instead. Role-based access,
+          encryption, and audit logs — deploy it your way.
+        </p>
+
+        <div class="install-bar">
+          <code id="install-cmd">$ git clone https://github.com/anandukch/aegis.git</code>
+          <div class="install-actions">
+            <button class="btn" type="button" id="copy-btn">Copy</button>
+            <a class="btn btn-primary" href="#install">Quickstart</a>
+          </div>
+        </div>
+
+        <ul class="pills">
+          <li>Open source</li>
+          <li>AES-256-GCM</li>
+          <li>JWT RBAC</li>
+          <li>Audit every read</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <span class="label">Problem</span>
+        <h2 class="section-title">Your database shouldn't hold plain emails and card numbers.</h2>
+        <p class="section-body">
+          Apps need PII for support, billing, and identity — but storing raw values
+          in Postgres spreads risk across every query, backup, and breach. The fix
+          isn't vendor lock-in or opacity. It's a vault built on transparency and control.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <span class="label">Workflow</span>
+        <h2 class="section-title">A simple loop for sensitive data.</h2>
+
+        <div class="workflow-grid">
+          <div class="workflow-card">
+            <p class="step">Tokenize</p>
+            <h3>Send the value, get a token</h3>
+            <p>POST the raw email, phone, or card to the vault. Aegis encrypts it and returns an opaque token.</p>
+          </div>
+          <div class="workflow-card">
+            <p class="step">Store</p>
+            <h3>Keep the token in your app DB</h3>
+            <p>Your application stores only the token. Backups and logs never contain the original PII.</p>
+          </div>
+          <div class="workflow-card">
+            <p class="step">Detokenize</p>
+            <h3>Retrieve with the right role</h3>
+            <p>Authorized roles get full or masked values. Every access is logged — including denials.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <span class="label">What it handles</span>
+        <h2 class="section-title">Built for privacy, access control, and audit.</h2>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h3>Encryption</h3>
+            <p>AES-256-GCM with a random nonce per record. Ciphertext without the master key is useless.</p>
+          </div>
+          <div class="feature-card">
+            <h3>RBAC</h3>
+            <p>Roles control who sees full values, masked values, or nothing at all.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Audit logs</h3>
+            <p>Append-only trail of every store, detokenize, and delete — actor, IP, timestamp.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Masking</h3>
+            <p>Analysts and viewers get redacted output. Admins and service roles get what they need.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <span class="label">Data types</span>
+        <h2 class="section-title">Tokenize the fields that matter.</h2>
+        <div class="tag-grid">
+          <span class="tag">email</span>
+          <span class="tag">phone</span>
+          <span class="tag">card_number</span>
+          <span class="tag">aadhaar</span>
+          <span class="tag">pan</span>
+          <span class="tag">name</span>
+          <span class="tag">dob</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <span class="label">Roles</span>
+        <h2 class="section-title">Four roles. One access matrix.</h2>
+        <ul class="role-list">
+          <li>ADMIN</li>
+          <li>ANALYST</li>
+          <li>SERVICE</li>
+          <li>VIEWER</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="install">
+      <div class="wrap">
+        <span class="label">Install</span>
+        <h2 class="section-title">Run it on your own machine.</h2>
+        <p class="section-body">
+          Clone the repo, set two secrets, and start with Docker. Postgres, migrations,
+          and the API come up together. No vendor account required.
+        </p>
+
+        <pre class="install-block"><code>git clone https://github.com/anandukch/aegis.git
+cd aegis
+cp .env.example .env
+# set JWT_SECRET (32+ chars) and VAULT_MASTER_KEY (exactly 32 chars)
+
+docker-compose up --build</code></pre>
+        <p class="install-note">API at <code>http://localhost:8080</code> · health check <code>/health</code></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Aegis · PII Data Privacy Vault</span>
+      <ul class="footer-links">
+        <li><a href="https://github.com/anandukch/aegis">GitHub</a></li>
+        <li><a href="./USAGE_GUIDE.html">Usage guide</a></li>
+        <li><a href="./API.html">API reference</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script>
+    const cmd = document.getElementById('install-cmd');
+    const btn = document.getElementById('copy-btn');
+    const text = 'git clone https://github.com/anandukch/aegis.git';
+
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      } catch {
+        btn.textContent = 'Failed';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>

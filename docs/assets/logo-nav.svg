@@ -1,0 +1,11 @@
+<svg width="160" height="36" viewBox="0 0 160 36" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Aegis</title>
+  <desc>Aegis navbar logo - compact horizontal lockup</desc>
+  <g transform="translate(18,18)">
+    <path d="M-9,-14 L-14,-14 L-14,14 L-9,14" fill="none" stroke="#00D4AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M9,-14 L14,-14 L14,14 L9,14" fill="none" stroke="#00D4AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M0,-8 L-6,8 L6,8 Z" fill="#00D4AA"/>
+    <line x1="-3" y1="1" x2="3" y2="1" stroke="#0D1117" stroke-width="1.6" stroke-linecap="round"/>
+  </g>
+  <text x="40" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="17" font-weight="600" letter-spacing="3" fill="#E6EDF3">AEGIS</text>
+</svg>

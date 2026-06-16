@@ -1,0 +1,18 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Aegis icon</title>
+  <desc>Aegis token bracket icon mark</desc>
+
+  <rect width="64" height="64" rx="14" fill="#0D1117"/>
+
+  <g transform="translate(32,32)">
+    <path d="M-12,-20 L-20,-20 L-20,20 L-12,20"
+          fill="none" stroke="#00D4AA" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12,-20 L20,-20 L20,20 L12,20"
+          fill="none" stroke="#00D4AA" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M0,-11 L-8,10 L8,10 Z" fill="#00D4AA"/>
+    <line x1="-4" y1="1.5" x2="4" y2="1.5"
+          stroke="#0D1117" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
