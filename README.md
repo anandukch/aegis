@@ -1,6 +1,15 @@
 <p align="center">
-  <img src="./assets/logo1.png" alt="AEGIS logo" width="200"/>
-  <h1 align="center">AEGIS</h1>
+  <svg width="280" height="80" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(40,40)">
+      <path d="M-18,-28 L-28,-28 L-28,28 L-18,28" fill="none" stroke="#00D4AA" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M18,-28 L28,-28 L28,28 L18,28" fill="none" stroke="#00D4AA" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M0,-16 L-11,14 L11,14 Z" fill="#00D4AA"/>
+      <line x1="-5.5" y1="2" x2="5.5" y2="2" stroke="#0D1117" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+    <text x="84" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="600" letter-spacing="4" fill="#E6EDF3">AEGIS</text>
+    <line x1="84" y1="44" x2="264" y2="44" stroke="#00D4AA" stroke-width="0.6" opacity="0.35"/>
+    <text x="84" y="58" font-family="system-ui, -apple-system, sans-serif" font-size="9" letter-spacing="2" fill="#8B949E">PII PRIVACY VAULT</text>
+  </svg>
 </p>
 
 A **PII Data Privacy Vault** REST API built in Go. Instead of storing raw sensitive data (emails, phone numbers, card numbers) in your application database, you send them to AEGIS, get back an opaque token, and store that token. Only authorized roles can retrieve the real data — and every access is logged.
