@@ -10,23 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-var accessMatrix = map[string]map[string]string{
-	"ADMIN": {
-		"": "FULL",
-	},
-	"ANALYST": {
-		"email":       "MASKED",
-		"name":        "MASKED",
-		"card_number": "DENIED",
-		"":            "MASKED",
-	},
-	"SERVICE": {
-		"card_number": "FULL",
-		"":            "MASKED",
-	},
-	"VIEWER": {
-		"": "MASKED",
-	},
+// RBACResolver resolves the access level for a given role and field type.
+// rbac.Service implements this interface.
+type RBACResolver interface {
+	ResolveAccess(roleName, fieldType string) string
 }
 
 type RepositoryInterface interface {
@@ -39,11 +26,12 @@ type RepositoryInterface interface {
 }
 
 type Service struct {
-	repo RepositoryInterface
+	repo    RepositoryInterface
+	rbacSvc RBACResolver
 }
 
-func NewService(repo RepositoryInterface) *Service {
-	return &Service{repo: repo}
+func NewService(repo RepositoryInterface, rbacSvc RBACResolver) *Service {
+	return &Service{repo: repo, rbacSvc: rbacSvc}
 }
 
 func (s *Service) Tokenize(fieldType, value, createdByID string) (*models.VaultRecord, error) {
@@ -102,7 +90,7 @@ func (s *Service) Detokenize(token, role string) (value, accessLevel string, err
 		return "", "", err
 	}
 
-	accessLevel = resolveAccess(role, record.FieldType)
+	accessLevel = s.rbacSvc.ResolveAccess(role, record.FieldType)
 	if accessLevel == "DENIED" {
 		return "", "DENIED", errors.New("access denied for this field type")
 	}
@@ -246,17 +234,6 @@ func (s *Service) Delete(token string) error {
 
 func (s *Service) GetMetadata(token string) (*models.VaultRecord, error) {
 	return s.repo.FindByToken(token)
-}
-
-func resolveAccess(role, fieldType string) string {
-	roleMap, ok := accessMatrix[role]
-	if !ok {
-		return "DENIED"
-	}
-	if level, ok := roleMap[fieldType]; ok {
-		return level
-	}
-	return roleMap[""]
 }
 
 func masterKey() ([]byte, error) {

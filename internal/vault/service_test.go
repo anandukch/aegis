@@ -20,6 +20,27 @@ func init() {
 
 var testKey = []byte("12345678901234567890123456789012")
 
+// stubRBAC reproduces the original hardcoded access matrix so existing tests
+// don't need per-test RBAC mock setup.
+type stubRBAC struct{}
+
+func (s *stubRBAC) ResolveAccess(roleName, fieldType string) string {
+	matrix := map[string]map[string]string{
+		"ADMIN":   {"*": "FULL"},
+		"ANALYST": {"email": "MASKED", "name": "MASKED", "card_number": "DENIED", "*": "MASKED"},
+		"SERVICE": {"card_number": "FULL", "*": "MASKED"},
+		"VIEWER":  {"*": "MASKED"},
+	}
+	roleMap, ok := matrix[roleName]
+	if !ok {
+		return "DENIED"
+	}
+	if level, ok := roleMap[fieldType]; ok {
+		return level
+	}
+	return roleMap["*"]
+}
+
 type mockRepo struct {
 	mock.Mock
 }
@@ -96,7 +117,7 @@ func TestTokenize_StoresRecord(t *testing.T) {
 	m := &mockRepo{}
 	m.On("Create", mock.AnythingOfType("*models.VaultRecord")).Return(nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	record, err := svc.Tokenize("email", "john@example.com", uuid.New().String())
 
 	require.NoError(t, err)
@@ -111,13 +132,13 @@ func TestTokenize_RepoError(t *testing.T) {
 	m := &mockRepo{}
 	m.On("Create", mock.Anything).Return(errors.New("db error"))
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	_, err := svc.Tokenize("email", "john@example.com", "")
 	assert.Error(t, err)
 }
 
 func TestTokenize_InvalidPAN(t *testing.T) {
-	svc := NewService(&mockRepo{})
+	svc := NewService(&mockRepo{}, &stubRBAC{})
 	_, err := svc.Tokenize("pan", "invalid-pan", "")
 	assert.ErrorIs(t, err, crypto.ErrInvalidPAN)
 }
@@ -136,7 +157,7 @@ func TestTokenize_NormalizesPAN(t *testing.T) {
 		assert.Equal(t, "ABCDE1234F", dec)
 	})
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	record, err := svc.Tokenize("pan", "abcde1234f", uuid.New().String())
 	require.NoError(t, err)
 	assert.Equal(t, "pan", record.FieldType)
@@ -150,7 +171,7 @@ func TestDetokenize_LegacyAdminFull(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", rec.Token).Return(rec, nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	value, level, err := svc.Detokenize(rec.Token, "ADMIN")
 	require.NoError(t, err)
 	assert.Equal(t, "john@example.com", value)
@@ -162,7 +183,7 @@ func TestDetokenize_LegacyAnalystMaskedEmail(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", rec.Token).Return(rec, nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	value, level, err := svc.Detokenize(rec.Token, "ANALYST")
 	require.NoError(t, err)
 	assert.Equal(t, "MASKED", level)
@@ -176,7 +197,7 @@ func TestDetokenize_EnvelopeAdminFull(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", rec.Token).Return(rec, nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	value, level, err := svc.Detokenize(rec.Token, "ADMIN")
 	require.NoError(t, err)
 	assert.Equal(t, "john@example.com", value)
@@ -188,7 +209,7 @@ func TestDetokenize_EnvelopeAnalystMasked(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", rec.Token).Return(rec, nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	value, level, err := svc.Detokenize(rec.Token, "ANALYST")
 	require.NoError(t, err)
 	assert.Equal(t, "MASKED", level)
@@ -200,7 +221,7 @@ func TestDetokenize_AnalystDeniedCard(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", rec.Token).Return(rec, nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	_, level, err := svc.Detokenize(rec.Token, "ANALYST")
 	assert.Error(t, err)
 	assert.Equal(t, "DENIED", level)
@@ -211,7 +232,7 @@ func TestDetokenize_ServiceFullCard(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", rec.Token).Return(rec, nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	value, level, err := svc.Detokenize(rec.Token, "SERVICE")
 	require.NoError(t, err)
 	assert.Equal(t, "FULL", level)
@@ -223,7 +244,7 @@ func TestDetokenize_ViewerMasked(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", rec.Token).Return(rec, nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	value, level, err := svc.Detokenize(rec.Token, "VIEWER")
 	require.NoError(t, err)
 	assert.Equal(t, "MASKED", level)
@@ -234,7 +255,7 @@ func TestDetokenize_NotFound(t *testing.T) {
 	m := &mockRepo{}
 	m.On("FindByToken", "tok_bad").Return(nil, errors.New("token not found"))
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	_, _, err := svc.Detokenize("tok_bad", "ADMIN")
 	assert.Error(t, err)
 }
@@ -266,7 +287,7 @@ func TestRotateKeys_ReWrapsEncDEKOnly(t *testing.T) {
 	})
 	m.On("UpdateEncDEK", rec2.ID, mock.AnythingOfType("string")).Return(nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	rotated, err := svc.RotateKeys(newKEK)
 	require.NoError(t, err)
 	assert.Equal(t, 2, rotated)
@@ -283,7 +304,7 @@ func TestRotateKeys_SkipsLegacyRecords(t *testing.T) {
 	m.On("FindAll").Return([]*models.VaultRecord{legacy, envelope}, nil)
 	m.On("UpdateEncDEK", envelope.ID, mock.AnythingOfType("string")).Return(nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	rotated, err := svc.RotateKeys(newKEK)
 	require.NoError(t, err)
 	assert.Equal(t, 1, rotated, "legacy record without enc_dek must be skipped")
@@ -291,7 +312,7 @@ func TestRotateKeys_SkipsLegacyRecords(t *testing.T) {
 }
 
 func TestRotateKeys_RejectsShortKey(t *testing.T) {
-	svc := NewService(&mockRepo{})
+	svc := NewService(&mockRepo{}, &stubRBAC{})
 	_, err := svc.RotateKeys([]byte("tooshort"))
 	assert.Error(t, err)
 }
@@ -323,7 +344,7 @@ func TestMigrateToEnvelope_MigratesLegacyRecords(t *testing.T) {
 		assert.Equal(t, "alice@example.com", plaintext)
 	})
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	migrated, err := svc.MigrateToEnvelope()
 	require.NoError(t, err)
 	assert.Equal(t, 1, migrated, "already-migrated record must be skipped")
@@ -336,15 +357,17 @@ func TestDelete_SoftDeletes(t *testing.T) {
 	m := &mockRepo{}
 	m.On("SoftDelete", "tok_abc").Return(nil)
 
-	svc := NewService(m)
+	svc := NewService(m, &stubRBAC{})
 	err := svc.Delete("tok_abc")
 	assert.NoError(t, err)
 	m.AssertExpectations(t)
 }
 
-// --- resolveAccess tests ---
+// --- stubRBAC access resolution tests ---
+// Verifies that the stub used in unit tests matches the expected access matrix behaviour.
 
-func TestResolveAccess(t *testing.T) {
+func TestStubRBAC_ResolveAccess(t *testing.T) {
+	rb := &stubRBAC{}
 	cases := []struct {
 		role, field, want string
 	}{
@@ -359,6 +382,6 @@ func TestResolveAccess(t *testing.T) {
 		{"UNKNOWN", "email", "DENIED"},
 	}
 	for _, tc := range cases {
-		assert.Equal(t, tc.want, resolveAccess(tc.role, tc.field), "%s / %s", tc.role, tc.field)
+		assert.Equal(t, tc.want, rb.ResolveAccess(tc.role, tc.field), "%s / %s", tc.role, tc.field)
 	}
 }

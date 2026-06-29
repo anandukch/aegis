@@ -19,7 +19,8 @@
     { "name": "health", "description": "Service health" },
     { "name": "auth", "description": "Registration and login" },
     { "name": "vault", "description": "Tokenize and detokenize PII" },
-    { "name": "rbac", "description": "Roles and permissions" },
+    { "name": "rbac", "description": "Roles and permissions (read)" },
+    { "name": "rbac-admin", "description": "Dynamic role & permission management (ADMIN only)" },
     { "name": "audit", "description": "Audit log (ADMIN only)" }
   ],
   "paths": {
@@ -356,6 +357,309 @@
         }
       }
     },
+    "/api/v1/rbac/roles": {
+      "post": {
+        "tags": ["rbac-admin"],
+        "summary": "Create a new role",
+        "description": "Create a custom role. ADMIN only.",
+        "operationId": "createRole",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateRoleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Role created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Role" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "get": {
+        "tags": ["rbac-admin"],
+        "summary": "List all roles with permissions",
+        "description": "Returns every role and its configured field-level permissions. ADMIN only.",
+        "operationId": "listRolesAdmin",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Roles list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/RolesListResponse" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/api/v1/rbac/roles/{id}": {
+      "get": {
+        "tags": ["rbac-admin"],
+        "summary": "Get a role by ID",
+        "operationId": "getRole",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Role details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Role" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["rbac-admin"],
+        "summary": "Update a role's name / description",
+        "description": "Rename a non-system role or update its description. ADMIN only.",
+        "operationId": "updateRole",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateRoleRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Role updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Role" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "tags": ["rbac-admin"],
+        "summary": "Delete a role",
+        "description": "Delete a custom role. Fails if the role is a system role or has users assigned. ADMIN only.",
+        "operationId": "deleteRole",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Role deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/MessageResponse" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/v1/rbac/roles/{id}/permissions": {
+      "post": {
+        "tags": ["rbac-admin"],
+        "summary": "Set / update a field permission",
+        "description": "Upsert a field-level permission for a role. Use `field_type: \"*\"` for the default fallback. ADMIN only.",
+        "operationId": "setPermission",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetPermissionRequest" },
+              "examples": {
+                "specific_field": {
+                  "summary": "Grant masked access to email",
+                  "value": { "field_type": "email", "access_level": "MASKED" }
+                },
+                "default_permission": {
+                  "summary": "Deny everything else by default",
+                  "value": { "field_type": "*", "access_level": "DENIED" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permission saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/PermissionResponse" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/v1/rbac/roles/{id}/permissions/{field_type}": {
+      "delete": {
+        "tags": ["rbac-admin"],
+        "summary": "Remove a field permission",
+        "description": "Delete a specific field permission from a role. ADMIN only.",
+        "operationId": "deletePermission",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "field_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["email", "phone", "card_number", "aadhaar", "pan", "name", "dob", "*"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Permission removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/MessageResponse" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
     "/api/v1/audit/logs": {
       "get": {
         "tags": ["audit"],
@@ -611,9 +915,102 @@
         "properties": {
           "role": {
             "type": "string",
-            "enum": ["ADMIN", "ANALYST", "SERVICE", "VIEWER"],
+            "description": "Any role name that exists in the database",
             "example": "ANALYST"
           }
+        }
+      },
+      "CreateRoleRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]{1,50}$",
+            "description": "Role name — alphanumeric and underscores, max 50 chars",
+            "example": "AUDITOR"
+          },
+          "description": {
+            "type": "string",
+            "example": "Read-only access to audit logs and metadata"
+          }
+        }
+      },
+      "UpdateRoleRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]{1,50}$",
+            "example": "AUDITOR_V2"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated description"
+          }
+        }
+      },
+      "SetPermissionRequest": {
+        "type": "object",
+        "required": ["field_type", "access_level"],
+        "properties": {
+          "field_type": {
+            "type": "string",
+            "enum": ["email", "phone", "card_number", "aadhaar", "pan", "name", "dob", "*"],
+            "description": "Use \"*\" as the default/fallback permission",
+            "example": "email"
+          },
+          "access_level": {
+            "type": "string",
+            "enum": ["FULL", "MASKED", "DENIED"],
+            "example": "MASKED"
+          }
+        }
+      },
+      "RolePermission": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "role_id": { "type": "string", "format": "uuid" },
+          "field_type": { "type": "string", "example": "email" },
+          "access_level": { "type": "string", "enum": ["FULL", "MASKED", "DENIED"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Role": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string", "example": "AUDITOR" },
+          "description": { "type": "string" },
+          "is_system": {
+            "type": "boolean",
+            "description": "System roles cannot be deleted or renamed"
+          },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" },
+          "permissions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RolePermission" }
+          }
+        }
+      },
+      "RolesListResponse": {
+        "type": "object",
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Role" }
+          }
+        }
+      },
+      "PermissionResponse": {
+        "type": "object",
+        "properties": {
+          "role_id": { "type": "string", "format": "uuid" },
+          "field_type": { "type": "string" },
+          "access_level": { "type": "string", "enum": ["FULL", "MASKED", "DENIED"] }
         }
       },
       "AuditLogEntry": {

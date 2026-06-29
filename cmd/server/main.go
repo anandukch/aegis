@@ -33,13 +33,16 @@ func main() {
 	auditSvc := audit.NewService(auditRepo)
 	auditHandler := audit.NewHandler(auditSvc)
 
+	rbacRepo := rbac.NewRepository(database)
+	rbacSvc := rbac.NewService(rbacRepo)
+
 	authRepo := auth.NewRepository(database)
-	authSvc := auth.NewService(authRepo)
+	authSvc := auth.NewService(authRepo, rbacSvc)
 	authHandler := auth.NewHandler(authSvc)
-	rbacHandler := rbac.NewHandler(authSvc)
+	rbacHandler := rbac.NewHandler(rbacSvc, authSvc)
 
 	vaultRepo := vault.NewRepository(database)
-	vaultSvc := vault.NewService(vaultRepo)
+	vaultSvc := vault.NewService(vaultRepo, rbacSvc)
 	vaultHandler := vault.NewHandler(vaultSvc, auditSvc)
 
 	if os.Getenv("APP_ENV") == "production" {
@@ -71,6 +74,17 @@ func main() {
 
 		api.GET("/roles", rbacHandler.GetRoles)
 		api.POST("/users/:id/role", middleware.RequireRole("ADMIN"), rbacHandler.AssignRole)
+
+		rbacGroup := api.Group("/rbac", middleware.RequireRole("ADMIN"))
+		{
+			rbacGroup.POST("/roles", rbacHandler.CreateRole)
+			rbacGroup.GET("/roles", rbacHandler.ListRoles)
+			rbacGroup.GET("/roles/:id", rbacHandler.GetRole)
+			rbacGroup.PUT("/roles/:id", rbacHandler.UpdateRole)
+			rbacGroup.DELETE("/roles/:id", rbacHandler.DeleteRole)
+			rbacGroup.POST("/roles/:id/permissions", rbacHandler.SetPermission)
+			rbacGroup.DELETE("/roles/:id/permissions/:field_type", rbacHandler.DeletePermission)
+		}
 
 		api.GET("/audit/logs", middleware.RequireRole("ADMIN"), auditHandler.GetLogs)
 		api.GET("/audit/logs/:token", middleware.RequireRole("ADMIN"), auditHandler.GetLogsByToken)

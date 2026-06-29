@@ -13,11 +13,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var ValidRoles = map[string]bool{
-	"ADMIN":   true,
-	"ANALYST": true,
-	"SERVICE": true,
-	"VIEWER":  true,
+// RoleChecker checks whether a role name is valid (exists in the database).
+// rbac.Service implements this interface.
+type RoleChecker interface {
+	RoleExists(name string) bool
 }
 
 type Claims struct {
@@ -27,15 +26,16 @@ type Claims struct {
 }
 
 type Service struct {
-	repo *Repository
+	repo        *Repository
+	roleChecker RoleChecker
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo *Repository, roleChecker RoleChecker) *Service {
+	return &Service{repo: repo, roleChecker: roleChecker}
 }
 
 func (s *Service) Register(username, password, role string) (*models.User, error) {
-	if !ValidRoles[role] {
+	if !s.roleChecker.RoleExists(role) {
 		role = "VIEWER"
 	}
 
@@ -75,7 +75,7 @@ func (s *Service) Login(username, password string) (string, *models.User, error)
 }
 
 func (s *Service) AssignRole(targetUserID uuid.UUID, role string) error {
-	if !ValidRoles[role] {
+	if !s.roleChecker.RoleExists(role) {
 		return fmt.Errorf("invalid role: %s", role)
 	}
 	return s.repo.UpdateRole(targetUserID, role)

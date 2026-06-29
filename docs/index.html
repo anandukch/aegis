@@ -320,6 +320,16 @@
       border: 1px solid var(--border);
       border-radius: 0.375rem;
     }
+    .role-list li.role-custom {
+      border-style: dashed;
+      color: var(--dim);
+    }
+    .role-note {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: var(--dim);
+      line-height: 1.6;
+    }
 
     /* Install section */
     .install-block {
@@ -478,8 +488,8 @@
             <p>AES-256-GCM with a random nonce per record. Ciphertext without the master key is useless.</p>
           </div>
           <div class="feature-card">
-            <h3>RBAC</h3>
-            <p>Roles control who sees full values, masked values, or nothing at all.</p>
+            <h3>Dynamic RBAC</h3>
+            <p>Four built-in roles to get started. Create custom roles and set per-field permissions — FULL, MASKED, or DENIED — via the API.</p>
           </div>
           <div class="feature-card">
             <h3>Audit logs</h3>
@@ -512,13 +522,23 @@
     <section>
       <div class="wrap">
         <span class="label">Roles</span>
-        <h2 class="section-title">Four roles. One access matrix.</h2>
+        <h2 class="section-title">Built-in roles, extensible with your own.</h2>
+        <p class="section-body">
+          Four system roles come ready to use. Need a custom access model?
+          Create a role, set per-field permissions, and assign it to users — all through the API.
+        </p>
         <ul class="role-list">
           <li>ADMIN</li>
           <li>ANALYST</li>
           <li>SERVICE</li>
           <li>VIEWER</li>
+          <li class="role-custom">+ your custom roles</li>
         </ul>
+        <p class="role-note">
+          Each role maps field types (<code>email</code>, <code>card_number</code>, <code>pan</code>&hellip;) to an access level:
+          <code>FULL</code>, <code>MASKED</code>, or <code>DENIED</code>.
+          A catch-all <code>*</code> permission sets the default for any unspecified field.
+        </p>
       </div>
     </section>
 
